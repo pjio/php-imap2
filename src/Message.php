@@ -165,7 +165,15 @@ class Message
 
         $messages = $client->fetch($imap->getMailboxName(), $messageNum, $isUid, ['BODY[TEXT]']);
 
-        return $messages[$messageNum]->bodypart['TEXT'];
+        if (empty($messages)) {
+            trigger_error(Errors::badMessageNumber(debug_backtrace(), 1), E_USER_WARNING);
+
+            return false;
+        }
+
+        $message = array_pop($messages);
+
+        return $message->bodypart['TEXT'];
     }
 
     public static function fetchBody($imap, $messageNum, $section, $flags = 0)
@@ -186,11 +194,13 @@ class Message
             return false;
         }
 
+        $message = array_pop($messages);
+
         if ($section) {
-            return $messages[$messageNum]->bodypart[$section];
+            return $message->bodypart[$section];
         }
 
-        return $messages[$messageNum]->body;
+        return $message->body;
     }
 
     public static function fetchMime($imap, $messageNum, $section, $flags = 0)
@@ -217,11 +227,13 @@ class Message
             return "";
         }
 
-        if ($section && isset($messages[$messageNum]->bodypart[$sectionKey])) {
-            return $messages[$messageNum]->bodypart[$sectionKey];
+        $message = array_pop($messages);
+
+        if ($section && isset($message->bodypart[$sectionKey])) {
+            return $message->bodypart[$sectionKey];
         }
 
-        return $messages[$messageNum]->body;
+        return $message->body;
     }
 
     public static function saveBody($imap, $file, $messageNum, $section = "", $flags = 0)
